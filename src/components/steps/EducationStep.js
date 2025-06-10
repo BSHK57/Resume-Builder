@@ -147,7 +147,7 @@ function EducationStep() {
                     value={education.gpa}
                     onChange={(e) => updateEducationField(education.id, 'gpa', e.target.value)}
                     className="form-input"
-                    placeholder="3.8/4.0"
+                    placeholder="7.8/10.0"
                   />
                 </div>
 
