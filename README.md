@@ -1,6 +1,6 @@
 # Resume-Builder
 
-A modern, interactive, and AI-assisted resume builder built with React and Tailwind CSS.
+A modern, interactive, resume builder built with React and Tailwind CSS.
 
 ## Features
 - Step-by-step resume creation (Personal Info, Experience, Education, Skills, Projects, Achievements)
