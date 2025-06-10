@@ -11,50 +11,123 @@ function PDFGenerator({ children }) {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
   };
 
-  const formatDateRange = (startDate, endDate, current) => {
-    const start = formatDate(startDate);
-    const end = current ? 'Present' : formatDate(endDate);
-    return `${start}${end ? ` - ${end}` : ''}`;
-  };
-
   const generatePDF = () => {
-    // Dynamically calculate page size based on content
     let y = 20;
     const left = 18;
     const right = 192;
     const lineHeight = 4;
     let maxY = y;
     let maxLineWidth = right - left;
-    // Use a temporary jsPDF instance to measure content height and width
-    const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
-    tempDoc.setFont('times', '');
-    // --- simulate all content rendering, updating maxY and maxLineWidth as needed ---
-    // For brevity, only simulate vertical growth (y) and max line width
-    // (In a real implementation, you'd repeat the rendering logic here)
-    // We'll estimate a large enough page for now
-    // ---
-    // Now create the real doc with the new size
-    const pageWidth = Math.max(210, maxLineWidth + 36); // 18mm margin each side
-    const pageHeight = Math.max(297, y + 200); // Add extra for content
+    const simulateY = () => {
+      let ySim = 20;
+      ySim += lineHeight;
+      if (resumeData.personalInfo.email || resumeData.personalInfo.phone || resumeData.personalInfo.location) ySim += lineHeight;
+      if (resumeData.personalInfo.linkedin) ySim += 5;
+      if (resumeData.personalInfo.website) ySim += 5;
+      ySim += 2 + 4;
+      if (resumeData.personalInfo.summary) {
+        ySim += lineHeight + 2;
+        const summaryPara = resumeData.personalInfo.summary.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
+        tempDoc.setFont('times', 'normal');
+        tempDoc.setFontSize(11);
+        const summaryLines = tempDoc.splitTextToSize(summaryPara, right - left);
+        ySim += summaryLines.length * 5 + 2 + 4;
+      }
+      if (resumeData.experience && resumeData.experience.length > 0) {
+        ySim += lineHeight + 2;
+        resumeData.experience.forEach(exp => {
+          ySim += 6;
+          if (exp.description) {
+            const descPara = exp.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
+            tempDoc.setFont('times', 'normal');
+            tempDoc.setFontSize(11);
+            const descLines = tempDoc.splitTextToSize(descPara, right - left - 4);
+            ySim += descLines.length * 5 + 2;
+          } else {
+            ySim += 2;
+          }
+        });
+        ySim += 6;
+      }
+      if (resumeData.education && resumeData.education.length > 0) {
+        ySim += lineHeight + 2;
+        resumeData.education.forEach(edu => {
+          ySim += 6 + 5;
+          if (edu.description) {
+            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
+            tempDoc.setFont('times', 'normal');
+            tempDoc.setFontSize(11);
+            const descLines = tempDoc.splitTextToSize(edu.description, right - left - 4);
+            ySim += descLines.length * 5 + 2;
+          } else {
+            ySim += 2;
+          }
+        });
+        ySim += 6;
+      }
+      if (resumeData.skills && resumeData.skills.length > 0) {
+        ySim += lineHeight + 2;
+        const categories = ['technical', 'tools', 'soft', 'languages'];
+        categories.forEach(cat => {
+          const catSkills = resumeData.skills.filter(s => s.category === cat);
+          if (catSkills.length > 0) ySim += 5;
+        });
+        ySim += 2 + 6;
+      }
+      if (resumeData.projects && resumeData.projects.length > 0) {
+        ySim += lineHeight + 2;
+        resumeData.projects.forEach(proj => {
+          ySim += 6;
+          if (proj.technologies) ySim += 5;
+          if (proj.description) {
+            const descPara = proj.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
+            tempDoc.setFont('times', 'normal');
+            tempDoc.setFontSize(11);
+            const descLines = tempDoc.splitTextToSize(descPara, right - left - 10);
+            ySim += 5 + (descLines.length - 1) * 5 + 2;
+          }
+          if (proj.url) ySim += 5;
+          if (proj.github) ySim += 5;
+          ySim += 2;
+        });
+        ySim += 6;
+      }
+      if (resumeData.achievements && resumeData.achievements.length > 0) {
+        ySim += lineHeight + 2;
+        resumeData.achievements.forEach(ach => {
+          ySim += 6;
+          if (ach.description) {
+            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
+            tempDoc.setFont('times', 'normal');
+            tempDoc.setFontSize(11);
+            const descLines = tempDoc.splitTextToSize(ach.description, right - left - 4);
+            ySim += descLines.length * 5 + 2;
+          } else {
+            ySim += 2;
+          }
+        });
+        ySim += 6;
+      }
+      return ySim;
+    };
+    maxY = simulateY();
+    const pageWidth = Math.max(210, maxLineWidth + 36);
+    const pageHeight = Math.max(297, maxY + 20);
     const doc = new jsPDF({ unit: 'mm', format: [pageWidth, pageHeight] });
     y = 20;
-    // Set font to Times New Roman
     doc.setFont('times', '');
-
-    // Draw border around the page
     doc.setDrawColor(100, 100, 100);
     doc.setLineWidth(0.5);
     doc.rect(10, 10, pageWidth - 20, pageHeight - 20, 'S');
-
-    // Header: Name
     doc.setFontSize(22);
     doc.setFont('times', 'bold');
-    // Center the name
     doc.text(resumeData.personalInfo.fullName || 'Your Name', 105, y, { align: 'center' });
-    y += lineHeight;
+    y += lineHeight+2;
     doc.setFontSize(11);
     doc.setFont('times', 'normal');
-    // Center the contact info, but put LinkedIn and Portfolio on new lines
     let contactArr = [
       resumeData.personalInfo.email,
       resumeData.personalInfo.phone,
@@ -65,27 +138,33 @@ function PDFGenerator({ children }) {
     let website = resumeData.personalInfo.website;
     if (contactStr) {
       doc.text(contactStr, 105, y, { align: 'center' });
-      y += lineHeight;
+      y += lineHeight+1;
     }
-    if (linkedin) {
-      doc.text(linkedin, 105, y, { align: 'center' });
+    if (linkedin && website) {
+      const linkText = `${linkedin}    |    ${website}`;
+      const linkWidth = doc.getTextWidth(linkText);
+      const xCenter = 105 - linkWidth / 2;
+      doc.textWithLink(linkedin, xCenter, y, { url: linkedin });
+      const linkedinWidth = doc.getTextWidth(linkedin);
+      doc.text('    |    ', xCenter + linkedinWidth, y);
+      doc.textWithLink(website, xCenter + linkedinWidth + doc.getTextWidth('    |    '), y, { url: website });
       y += 5;
-    }
-    if (website) {
-      doc.text(website, 105, y, { align: 'center' });
+    } else if (linkedin) {
+      doc.textWithLink(linkedin, 105, y, { align: 'center', url: linkedin });
+      y += 5;
+    } else if (website) {
+      doc.textWithLink(website, 105, y, { align: 'center', url: website });
       y += 5;
     }
     y += 2;
     doc.setDrawColor(200, 200, 200);
     doc.line(18, y-2, pageWidth - 18, y-2);
     y += 4;
-
-    // Professional Summary
     if (resumeData.personalInfo.summary) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('PROFESSIONAL SUMMARY', left, y);
-      y += lineHeight + 2; // Increased spacing after header
+      y += lineHeight + 2;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       const summaryPara = resumeData.personalInfo.summary.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
@@ -94,19 +173,16 @@ function PDFGenerator({ children }) {
         doc.text(line, left + 4, y);
         y += 5;
       });
-      y += 2; // Extra gap after summary block
-      // After Professional Summary
+      y += 2;
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
-      y += 4; // Increased gap after the line for separation
+      y += 4;
     }
-
-    // Experience
     if (resumeData.experience && resumeData.experience.length > 0) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('PROFESSIONAL EXPERIENCE', left, y);
-      y += lineHeight + 2; // Increased spacing after header
+      y += lineHeight + 2;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       resumeData.experience.forEach(exp => {
@@ -114,9 +190,11 @@ function PDFGenerator({ children }) {
         doc.text(`${exp.position || ''} @ ${exp.company || ''}`, left, y);
         doc.setFont('times', 'normal');
         let dateLoc = [];
-        if (exp.startDate) dateLoc.push(formatDate(exp.startDate));
-        if (exp.endDate) dateLoc.push(formatDate(exp.endDate));
-        if (exp.current) dateLoc[1] = 'Present';
+        if (exp.startDate || exp.endDate) {
+          let start = exp.startDate ? formatDate(exp.startDate) : '';
+          let end = exp.current ? 'Present' : (exp.endDate ? formatDate(exp.endDate) : '');
+          dateLoc.push([start, end].filter(Boolean).join(' - '));
+        }
         if (exp.location) dateLoc.push(exp.location);
         doc.text(dateLoc.join(' | '), right, y, { align: 'right' });
         y += 6;
@@ -127,22 +205,20 @@ function PDFGenerator({ children }) {
             doc.text(line, left + 4, y);
             y += 5;
           });
-          y += 2; // Extra gap after description block
+          y += 2;
         } else {
           y += 2;
         }
       });
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
-      y += 6; // Increased gap after the line for separation
+      y += 6;
     }
-
-    // Education
     if (resumeData.education && resumeData.education.length > 0) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('EDUCATION', left, y);
-      y += lineHeight + 2; // Increased spacing after header
+      y += lineHeight + 2;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       resumeData.education.forEach(edu => {
@@ -161,25 +237,23 @@ function PDFGenerator({ children }) {
         if (edu.description) {
           const descLines = doc.splitTextToSize(edu.description, right - left - 4);
           descLines.forEach(line => {
-            doc.text(`• ${line}`, left + 4, y);
+            doc.text(line, left + 4, y);
             y += 5;
           });
-          y += 2; // Extra gap after description block
+          y += 2;
         } else {
           y += 2;
         }
       });
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
-      y += 6; // Increased gap after the line for separation
+      y += 6;
     }
-
-    // Skills
     if (resumeData.skills && resumeData.skills.length > 0) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('SKILLS', left, y);
-      y += lineHeight + 2; // Increased spacing after header
+      y += lineHeight + 2;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       const categories = ['technical', 'tools', 'soft', 'languages'];
@@ -192,22 +266,23 @@ function PDFGenerator({ children }) {
       categories.forEach(cat => {
         const catSkills = resumeData.skills.filter(s => s.category === cat);
         if (catSkills.length > 0) {
-          doc.text(`${categoryNames[cat]}: ${catSkills.map(s => s.name).join(', ')}`, left + 4, y);
+          doc.setFont('times', 'bold');
+          doc.text(`${categoryNames[cat]}:`, left + 4, y);
+          doc.setFont('times', 'normal');
+          doc.text(catSkills.map(s => s.name).join(', '), left + 4 + doc.getTextWidth(`${categoryNames[cat]}:   `), y);
           y += 5;
         }
       });
       y += 2;
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
-      y += 6; // Increased gap after the line for separation
+      y += 6;
     }
-
-    // Projects
     if (resumeData.projects && resumeData.projects.length > 0) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('PROJECTS', left, y);
-      y += lineHeight + 2; // Increased spacing after header
+      y += lineHeight + 2;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       resumeData.projects.forEach(proj => {
@@ -232,29 +307,27 @@ function PDFGenerator({ children }) {
             doc.text(descLines[i], left + 10, y);
             y += 5;
           }
-          y += 2; // Extra gap after description block
+          y += 2;
         }
         if (proj.url) {
-          doc.text(`Live: ${proj.url}`, left + 4, y);
+          doc.textWithLink(`Live: ${proj.url}`, left + 4, y, { url: proj.url });
           y += 5;
         }
         if (proj.github) {
-          doc.text(`GitHub: ${proj.github}`, left + 4, y);
+          doc.textWithLink(`GitHub: ${proj.github}`, left + 4, y, { url: proj.github });
           y += 5;
         }
         y += 2;
       });
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
-      y += 6; // Increased gap after the line for separation
+      y += 6;
     }
-
-    // Achievements
     if (resumeData.achievements && resumeData.achievements.length > 0) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('ACHIEVEMENTS & AWARDS', left, y);
-      y += lineHeight + 2; // Increased spacing after header
+      y += lineHeight + 2;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       resumeData.achievements.forEach(ach => {
@@ -269,19 +342,18 @@ function PDFGenerator({ children }) {
         if (ach.description) {
           const descLines = doc.splitTextToSize(ach.description, right - left - 4);
           descLines.forEach(line => {
-            doc.text(`• ${line}`, left + 4, y);
+            doc.text(line, left + 4, y);
             y += 5;
           });
-          y += 2; // Extra gap after description block
+          y += 2;
         } else {
           y += 2;
         }
       });
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
-      y += 6; // Increased gap after the line for separation
+      y += 6;
     }
-
     doc.save(`${resumeData.personalInfo.fullName}_Resume.pdf`);
   };
 
