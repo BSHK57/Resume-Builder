@@ -13,111 +13,29 @@ function PDFGenerator({ children }) {
 
   const generatePDF = () => {
     let y = 20;
-    const left = 18;
-    const right = 192;
-    const lineHeight = 4;
-    let maxY = y;
-    let maxLineWidth = right - left;
-    const simulateY = () => {
-      let ySim = 20;
-      ySim += lineHeight;
-      if (resumeData.personalInfo.email || resumeData.personalInfo.phone || resumeData.personalInfo.location) ySim += lineHeight;
-      if (resumeData.personalInfo.linkedin) ySim += 5;
-      if (resumeData.personalInfo.website) ySim += 5;
-      ySim += 2 + 4;
-      if (resumeData.personalInfo.summary) {
-        ySim += lineHeight + 2;
-        const summaryPara = resumeData.personalInfo.summary.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-        const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
-        tempDoc.setFont('times', 'normal');
-        tempDoc.setFontSize(11);
-        const summaryLines = tempDoc.splitTextToSize(summaryPara, right - left);
-        ySim += summaryLines.length * 5 + 2 + 4;
-      }
-      if (resumeData.experience && resumeData.experience.length > 0) {
-        ySim += lineHeight + 2;
-        resumeData.experience.forEach(exp => {
-          ySim += 6;
-          if (exp.description) {
-            const descPara = exp.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
-            tempDoc.setFont('times', 'normal');
-            tempDoc.setFontSize(11);
-            const descLines = tempDoc.splitTextToSize(descPara, right - left - 4);
-            ySim += descLines.length * 5 + 2;
-          } else {
-            ySim += 2;
-          }
-        });
-        ySim += 6;
-      }
-      if (resumeData.education && resumeData.education.length > 0) {
-        ySim += lineHeight + 2;
-        resumeData.education.forEach(edu => {
-          ySim += 6 + 5;
-          if (edu.description) {
-            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
-            tempDoc.setFont('times', 'normal');
-            tempDoc.setFontSize(11);
-            const descLines = tempDoc.splitTextToSize(edu.description, right - left - 4);
-            ySim += descLines.length * 5 + 2;
-          } else {
-            ySim += 2;
-          }
-        });
-        ySim += 6;
-      }
-      if (resumeData.skills && resumeData.skills.length > 0) {
-        ySim += lineHeight + 2;
-        const categories = ['technical', 'tools', 'soft', 'languages'];
-        categories.forEach(cat => {
-          const catSkills = resumeData.skills.filter(s => s.category === cat);
-          if (catSkills.length > 0) ySim += 5;
-        });
-        ySim += 2 + 6;
-      }
-      if (resumeData.projects && resumeData.projects.length > 0) {
-        ySim += lineHeight + 2;
-        resumeData.projects.forEach(proj => {
-          ySim += 6;
-          if (proj.technologies) ySim += 5;
-          if (proj.description) {
-            const descPara = proj.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
-            tempDoc.setFont('times', 'normal');
-            tempDoc.setFontSize(11);
-            const descLines = tempDoc.splitTextToSize(descPara, right - left - 10);
-            ySim += 5 + (descLines.length - 1) * 5 + 2;
-          }
-          if (proj.url) ySim += 5;
-          if (proj.github) ySim += 5;
-          ySim += 2;
-        });
-        ySim += 6;
-      }
-      if (resumeData.achievements && resumeData.achievements.length > 0) {
-        ySim += lineHeight + 2;
-        resumeData.achievements.forEach(ach => {
-          ySim += 6;
-          if (ach.description) {
-            const tempDoc = new jsPDF({ unit: 'mm', format: 'a4' });
-            tempDoc.setFont('times', 'normal');
-            tempDoc.setFontSize(11);
-            const descLines = tempDoc.splitTextToSize(ach.description, right - left - 4);
-            ySim += descLines.length * 5 + 2;
-          } else {
-            ySim += 2;
-          }
-        });
-        ySim += 6;
-      }
-      return ySim;
-    };
-    maxY = simulateY();
-    const pageWidth = Math.max(210, maxLineWidth + 36);
-    const pageHeight = Math.max(297, maxY + 20);
+    let left = 18;
+    const pageWidth = 210;
+    const pageHeight = 297;
+    left = 18;
+    let right = pageWidth - left;
+    const bottomMargin = 20;
     const doc = new jsPDF({ unit: 'mm', format: [pageWidth, pageHeight] });
     y = 20;
+    // Draw border on the first page
+    doc.setDrawColor(100, 100, 100);
+    doc.setLineWidth(0.5);
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20, 'S');
+    // Helper to check for page overflow and add new page if needed
+    const checkPage = (extra = 0) => {
+      if (y + extra > pageHeight - bottomMargin) {
+        doc.addPage();
+        doc.setDrawColor(100, 100, 100);
+        doc.setLineWidth(0.5);
+        doc.rect(10, 10, pageWidth - 20, pageHeight - 20, 'S');
+        y = 20;
+        doc.setFont('times', '');
+      }
+    };
     doc.setFont('times', '');
     doc.setDrawColor(100, 100, 100);
     doc.setLineWidth(0.5);
@@ -125,7 +43,7 @@ function PDFGenerator({ children }) {
     doc.setFontSize(22);
     doc.setFont('times', 'bold');
     doc.text(resumeData.personalInfo.fullName || 'Your Name', 105, y, { align: 'center' });
-    y += lineHeight+2;
+    y += 5;
     doc.setFontSize(11);
     doc.setFont('times', 'normal');
     let contactArr = [
@@ -138,22 +56,30 @@ function PDFGenerator({ children }) {
     let website = resumeData.personalInfo.website;
     if (contactStr) {
       doc.text(contactStr, 105, y, { align: 'center' });
-      y += lineHeight+1;
+      y += 5;
     }
     if (linkedin && website) {
       const linkText = `${linkedin}    |    ${website}`;
       const linkWidth = doc.getTextWidth(linkText);
       const xCenter = 105 - linkWidth / 2;
+      doc.setTextColor(0, 0, 255); // Blue
       doc.textWithLink(linkedin, xCenter, y, { url: linkedin });
       const linkedinWidth = doc.getTextWidth(linkedin);
+      doc.setTextColor(0, 0, 0); // Black for separator
       doc.text('    |    ', xCenter + linkedinWidth, y);
+      doc.setTextColor(0, 0, 255); // Blue
       doc.textWithLink(website, xCenter + linkedinWidth + doc.getTextWidth('    |    '), y, { url: website });
+      doc.setTextColor(0, 0, 0); // Reset to black
       y += 5;
     } else if (linkedin) {
+      doc.setTextColor(0, 0, 255); // Blue
       doc.textWithLink(linkedin, 105, y, { align: 'center', url: linkedin });
+      doc.setTextColor(0, 0, 0); // Reset to black
       y += 5;
     } else if (website) {
+      doc.setTextColor(0, 0, 255); // Blue
       doc.textWithLink(website, 105, y, { align: 'center', url: website });
+      doc.setTextColor(0, 0, 0); // Reset to black
       y += 5;
     }
     y += 2;
@@ -164,16 +90,18 @@ function PDFGenerator({ children }) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('PROFESSIONAL SUMMARY', left, y);
-      y += lineHeight + 2;
+      y += 8;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       const summaryPara = resumeData.personalInfo.summary.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
       const summaryLines = doc.splitTextToSize(summaryPara, right - left);
       summaryLines.forEach(line => {
+        checkPage(5);
         doc.text(line, left + 4, y);
         y += 5;
       });
       y += 2;
+      checkPage(4);
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
       y += 4;
@@ -182,10 +110,11 @@ function PDFGenerator({ children }) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('PROFESSIONAL EXPERIENCE', left, y);
-      y += lineHeight + 2;
+      y += 8;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       resumeData.experience.forEach(exp => {
+        checkPage(6);
         doc.setFont('times', 'bold');
         doc.text(`${exp.position || ''} @ ${exp.company || ''}`, left, y);
         doc.setFont('times', 'normal');
@@ -202,6 +131,7 @@ function PDFGenerator({ children }) {
           const descPara = exp.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
           const descLines = doc.splitTextToSize(descPara, right - left - 4);
           descLines.forEach(line => {
+            checkPage(5);
             doc.text(line, left + 4, y);
             y += 5;
           });
@@ -210,6 +140,7 @@ function PDFGenerator({ children }) {
           y += 2;
         }
       });
+      checkPage(6);
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
       y += 6;
@@ -218,10 +149,11 @@ function PDFGenerator({ children }) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('EDUCATION', left, y);
-      y += lineHeight + 2;
+      y += 8;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       resumeData.education.forEach(edu => {
+        checkPage(6);
         doc.setFont('times', 'bold');
         doc.text(`${edu.degree || ''} ${edu.field ? 'in ' + edu.field : ''}`, left, y);
         doc.setFont('times', 'normal');
@@ -231,12 +163,14 @@ function PDFGenerator({ children }) {
         if (edu.location) dateLoc.push(edu.location);
         doc.text(dateLoc.join(' - '), right, y, { align: 'right' });
         y += 6;
+        checkPage(5);
         doc.text(edu.institution || '', left + 4, y);
         if (edu.gpa) doc.text(`GPA: ${edu.gpa}`, right, y, { align: 'right' });
         y += 5;
         if (edu.description) {
           const descLines = doc.splitTextToSize(edu.description, right - left - 4);
           descLines.forEach(line => {
+            checkPage(5);
             doc.text(line, left + 4, y);
             y += 5;
           });
@@ -245,6 +179,7 @@ function PDFGenerator({ children }) {
           y += 2;
         }
       });
+      checkPage(6);
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
       y += 6;
@@ -253,7 +188,7 @@ function PDFGenerator({ children }) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('SKILLS', left, y);
-      y += lineHeight + 2;
+      y += 8;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       const categories = ['technical', 'tools', 'soft', 'languages'];
@@ -266,6 +201,7 @@ function PDFGenerator({ children }) {
       categories.forEach(cat => {
         const catSkills = resumeData.skills.filter(s => s.category === cat);
         if (catSkills.length > 0) {
+          checkPage(5);
           doc.setFont('times', 'bold');
           doc.text(`${categoryNames[cat]}:`, left + 4, y);
           doc.setFont('times', 'normal');
@@ -274,6 +210,7 @@ function PDFGenerator({ children }) {
         }
       });
       y += 2;
+      checkPage(6);
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
       y += 6;
@@ -282,10 +219,11 @@ function PDFGenerator({ children }) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('PROJECTS', left, y);
-      y += lineHeight + 2;
+      y += 8;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
       resumeData.projects.forEach(proj => {
+        checkPage(6);
         doc.setFont('times', 'bold');
         doc.text(proj.name || '', left, y);
         doc.setFont('times', 'normal');
@@ -295,42 +233,65 @@ function PDFGenerator({ children }) {
         doc.text(dateLoc.join(' - '), right, y, { align: 'right' });
         y += 6;
         if (proj.technologies) {
+          checkPage(5);
           doc.text(`Technologies: ${proj.technologies}`, left + 4, y);
           y += 5;
         }
         if (proj.description) {
           const descPara = proj.description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
           const descLines = doc.splitTextToSize(descPara, right - left - 10);
-          doc.text(`• ${descLines[0]}`, left + 4, y);
-          y += 5;
-          for (let i = 1; i < descLines.length; i++) {
-            doc.text(descLines[i], left + 10, y);
+          if (descLines.length > 0) {
+            checkPage(5);
+            doc.text(`• ${descLines[0]}`, left + 4, y);
             y += 5;
+            for (let i = 1; i < descLines.length; i++) {
+              checkPage(5);
+              doc.text(descLines[i], left + 10, y);
+              y += 5;
+            }
           }
           y += 2;
         }
-        if (proj.url) {
-          doc.textWithLink(`Live: ${proj.url}`, left + 4, y, { url: proj.url });
+        let linkX = left + 4;
+        if (proj.url && proj.github) {
+          // Both links present, show in one line
+          doc.setTextColor(0, 0, 255); // Blue
+          doc.textWithLink(`Live: ${proj.url}`, linkX, y, { url: proj.url });
+          const liveWidth = doc.getTextWidth(`Live: ${proj.url}`);
+          doc.setTextColor(0, 0, 0); // Black for separator
+          doc.text('    |    ', linkX + liveWidth, y);
+          doc.setTextColor(0, 0, 255); // Blue
+          doc.textWithLink(`GitHub: ${proj.github}`, linkX + liveWidth + doc.getTextWidth('    |    '), y, { url: proj.github });
+          doc.setTextColor(0, 0, 0); // Reset to black
           y += 5;
-        }
-        if (proj.github) {
-          doc.textWithLink(`GitHub: ${proj.github}`, left + 4, y, { url: proj.github });
+        } else if (proj.url) {
+          doc.setTextColor(0, 0, 255); // Blue
+          doc.textWithLink(`Live: ${proj.url}`, linkX, y, { url: proj.url });
+          doc.setTextColor(0, 0, 0); // Reset to black
+          y += 5;
+        } else if (proj.github) {
+          doc.setTextColor(0, 0, 255); // Blue
+          doc.textWithLink(`GitHub: ${proj.github}`, linkX, y, { url: proj.github });
+          doc.setTextColor(0, 0, 0); // Reset to black
           y += 5;
         }
         y += 2;
       });
+      checkPage(6);
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
       y += 6;
     }
-    if (resumeData.achievements && resumeData.achievements.length > 0) {
+    // Achievements & Awards section (excluding certifications)
+    if (resumeData.achievements && resumeData.achievements.some(ach => ach.type !== 'certification')) {
       doc.setFontSize(13);
       doc.setFont('times', 'bold');
       doc.text('ACHIEVEMENTS & AWARDS', left, y);
-      y += lineHeight + 2;
+      y += 8;
       doc.setFont('times', 'normal');
       doc.setFontSize(11);
-      resumeData.achievements.forEach(ach => {
+      resumeData.achievements.filter(ach => ach.type !== 'certification').forEach(ach => {
+        checkPage(6);
         doc.setFont('times', 'bold');
         doc.text(ach.title || '', left, y);
         doc.setFont('times', 'normal');
@@ -342,6 +303,7 @@ function PDFGenerator({ children }) {
         if (ach.description) {
           const descLines = doc.splitTextToSize(ach.description, right - left - 4);
           descLines.forEach(line => {
+            checkPage(5);
             doc.text(line, left + 4, y);
             y += 5;
           });
@@ -350,6 +312,42 @@ function PDFGenerator({ children }) {
           y += 2;
         }
       });
+      checkPage(6);
+      doc.setDrawColor(200, 200, 200);
+      doc.line(left, y-2, pageWidth - left, y-2);
+      y += 6;
+    }
+    // Certifications section
+    if (resumeData.achievements && resumeData.achievements.some(ach => ach.type === 'certification')) {
+      doc.setFontSize(13);
+      doc.setFont('times', 'bold');
+      doc.text('CERTIFICATIONS', left, y);
+      y += 8;
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+      resumeData.achievements.filter(ach => ach.type === 'certification').forEach(ach => {
+        checkPage(6);
+        doc.setFont('times', 'bold');
+        doc.text(ach.title || '', left, y);
+        doc.setFont('times', 'normal');
+        let dateLoc = [];
+        if (ach.date) dateLoc.push(formatDate(ach.date));
+        if (ach.organization) dateLoc.push(ach.organization);
+        doc.text(dateLoc.join(' | '), right, y, { align: 'right' });
+        y += 6;
+        if (ach.description) {
+          const descLines = doc.splitTextToSize(ach.description, right - left - 4);
+          descLines.forEach(line => {
+            checkPage(5);
+            doc.text(line, left + 4, y);
+            y += 5;
+          });
+          y += 2;
+        } else {
+          y += 2;
+        }
+      });
+      checkPage(6);
       doc.setDrawColor(200, 200, 200);
       doc.line(left, y-2, pageWidth - left, y-2);
       y += 6;
