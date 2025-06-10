@@ -108,13 +108,12 @@ function ResumeBuilder() {
                   <button
                     onClick={handleNextStep}
                     disabled={currentStep === steps.length}
-                    className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                      currentStep === steps.length
+                    className={`px-6 py-3 rounded-lg font-semibold transition-colors btn-primary steps.length 
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'btn-primary'
+                        : 'btn-primary
                     }`}
                   >
-                    {currentStep === steps.length ? 'Complete' : 'Next'}
+                    Next
                   </button>
                 </div>
               </div>
@@ -127,7 +126,7 @@ function ResumeBuilder() {
               <div className="sticky top-8">
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">Resume Preview</h2>
-                  <div className="border rounded-lg overflow-hidden" style={{ height: '800px' }}>
+                  <div className="border rounded-lg overflow-hidden" style={{ height: '900px' }}>
                     <ResumePreview />
                   </div>
                 </div>

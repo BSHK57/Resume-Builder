@@ -17,7 +17,7 @@ function ResumePreview() {
   const fontFamily = { fontFamily: 'Times New Roman, Times, serif' };
 
   return (
-    <div id="resume-preview" className="bg-white p-8 max-w-3xl mx-auto text-[15px] leading-relaxed text-gray-900 h-[90vh] overflow-y-auto shadow" style={fontFamily}>
+    <div id="resume-preview" className="bg-white p-8 max-w-3xl mx-auto text-[15px] leading-relaxed text-gray-900 overflow-y-auto shadow" style={fontFamily}>
       {/* Header */}
       <div className="text-center mb-2">
         <h1 className="text-3xl font-bold tracking-tight mb-1" style={fontFamily}>{resumeData.personalInfo.fullName || 'Your Name'}</h1>
