@@ -13,7 +13,7 @@ A modern, interactive, resume builder built with React and Tailwind CSS.
 - Save and reset your progress (in-memory)
 
 ## Demo
-![Resume Builder Screenshot](public/screenshot.png)
+![Resume Builder Screenshot](public/screenshot1.png)
 
 ### Example Output PDF
 [Download Sample Resume PDF](./BIYYAPU%20SAI%20HARI%20KRISHNA_Resume.pdf)
