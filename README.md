@@ -84,9 +84,8 @@ Resume_Builder/
 - You can modify the UI and add more sections or fields as needed.
 - Tailwind CSS makes it easy to adjust styles.
 
-## License
-This project is licensed under the MIT License.
-
 ---
 
 *Built with ❤️ using React and Tailwind CSS.*
+
+_Almost all the code was written by AI._
